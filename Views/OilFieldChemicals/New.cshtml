@@ -1,0 +1,111 @@
+﻿@page
+@model HSELaboratoryPortal.Views.OilFieldChecmicals.NewModel
+@{
+    //ViewData["Title"] = "New Certification Application";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<main class="app-content" ng-controller="newApplicationCtrl">
+    <div class="app-title">
+            <div>
+                <h1><i class="fa fa-plus-circle"></i> New Certification Application</h1>
+            </div>
+        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="tile">
+                @*<h3 class="tile-title">Subscribe</h3>*@
+                <div class="tile-body">
+                    <form class="row">
+                        <div class="form-group col-md-3">
+                            <label class="control-label">Application ID</label>
+                            <input class="form-control" type="text" placeholder="Enter your name" disabled>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label class="control-label">Feedback Email</label>
+                            <input class="form-control" type="email" placeholder="Enter your email">
+                        </div>
+                        <div class="form-group col-md-4 align-self-end">
+                            <button class="btn btn-primary" type="button"><i class="fa fa-fw fa-lg fa-check-circle"></i>Subscribe</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="tile">
+                <h4 class="tile-title">Register Chemical</h4><hr />
+                <div class="tile-body">
+                    <form>
+                        <div class="form-group">
+                            <label class="control-label">Chemical Name</label>
+                            <input class="form-control" type="text" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label for="categoryofchemical">Category Of Chemical</label>
+                                <select class="form-control" id="categoryofchemical">
+                                    <option value="">--Select--</option>
+                                    <option value="Corrossion Inhibitor">Corrossion Inhibitor</option>
+                                    <option value="Drilling Chemical">Drilling Chemical</option>
+                                    <option value="Bioremediation Product">Bioremediation Product</option>
+                                    <option value="Oil Dispersant">Oil Dispersant</option>
+                                    <option value="Production Chemical">Production Chemical</option>
+                                    <option value="Mud Additive">Mud Additive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Manufacturer</label>
+                            <input class="form-control" type="email" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-group">
+                                <label for="countryofmanufacturer">Country Of Manufacturer</label>
+                                <select class="form-control" id="countryofmanufacturer">
+                                    <option value="">--Select--</option>
+                                    <option value="Japan">Japan</option>
+                                    <option value="China">China</option>
+                                    <option value="United States">United States</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+                <div class="tile-footer">
+                    <div class="row">
+                        <div class="col-md-8 col-md-offset-3">
+                            <button class="btn btn-primary" type="button"><i class="fa fa-fw fa-lg fa-check-circle"></i>Register</button>&nbsp;&nbsp;&nbsp;<a class="btn btn-secondary" href="#"><i class="fa fa-fw fa-lg fa-times-circle"></i>Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="tile">
+                <h4 class="tile-title">Added Chemicals</h4><hr />
+                <div class="tile-body text-center">
+                    <p>You're yet to add any chemical!</p>
+                </div>
+                
+            </div>
+        </div>
+        <div class="clearix"></div>
+    </div>
+</main>
+
+
+@section footerJS{
+
+    <script src="~/js/controllers/oilfieldchemicals/newapplication.js"></script>
+    <script>
+        $('#li_oilfieldchemicals').addClass('is-expanded');
+        $('#oilfieldchemicals_new').addClass('active');
+    </script>
+
+
+}

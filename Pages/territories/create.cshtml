@@ -1,0 +1,495 @@
+﻿@page
+@model ValiAdminCore.Pages.createTerritoryPageModel
+@{
+    ViewData["Title"] = "Create New Territory";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<main class="app-content" ng-controller="territoryCreateCtrl">
+    @*<div class="app-title">
+            <div>
+                <h1><i class="fa fa-dashboard"></i> Blank Page</h1>
+                <p>Start a beautiful journey here</p>
+            </div>
+            <ul class="app-breadcrumb breadcrumb">
+                <li class="breadcrumb-item"><i class="fa fa-home fa-lg"></i></li>
+                <li class="breadcrumb-item"><a href="#">Blank Page</a></li>
+            </ul>
+        </div>*@
+    <div class="row" ng-controller="utilCtrl">
+        <div class="col-lg-9">
+            <div class="tile">
+                <div class="tile-body">
+
+                </div>
+
+                <div id="map" style="height: 700px"></div>
+            </div>
+        </div>
+        <div class="tile col-lg-3" style="overflow-y: scroll; height:700px;">
+            <div id="color-palette" style="padding-bottom: 30px;"></div>
+            <div style="padding-bottom: 10px;">
+                <input id="pac-input" class="form-control" type="text" placeholder="Go to Address..." style="font-size: 14px">
+            </div>
+            <div>
+                <div>
+                    <button class="btn btn-danger btn-sm btn-block" id="delete-button"><i class="fa fa-trash"></i> Delete Shape</button>
+                </div>
+                <div id="curpos"></div>
+                <div id="cursel"></div>
+                @*<div id="note"><small>Note: markers can be selected, but are not graphically indicated; can be deleted, but cannot have their color changed.</small></div>*@
+
+            </div>
+            <hr />
+            <form name="territoryCreateForm" novalidate>
+                <div class="form-group">
+                    <label class="control-label">Territory Name<span class="text-danger"> *</span></label>
+                    <input style="font-size: 14px" ng-model="territoryModel.Name" name="terrname" class="form-control" type="text" maxlength="50" required placeholder="Enter a descriptive name...">
+                    <span style="font-size: 12px" ng-show="territoryCreateForm.terrname.$dirty && territoryCreateForm.terrname.$invalid">
+                        <span class="text-danger" ng-show="territoryCreateForm.terrname.$error.required">Territory is required.</span>
+                    </span>
+                    <span style="font-size: 12px" ng-show="territoryCreateForm.terrname.$touched && territoryModel.Name === ''">
+                        <span class="text-danger">Territory Name can not be blank!</span>
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Location<span class="text-danger"> *</span></label>
+                    <input ng-model="territoryModel.Location" name="location" class="form-control" type="text" style="font-size: 14px" maxlength="50" required>
+                    <span style="font-size: 12px" ng-show="territoryCreateForm.location.$dirty && territoryCreateForm.location.$invalid">
+                        <span class="text-danger" ng-show="territoryCreateForm.location.$error.required">Location is required.</span>
+                    </span>
+                    <span style="font-size: 12px" ng-show="territoryCreateForm.location.$touched && territoryModel.Location === ''">
+                        <span class="text-danger">Location  can not be blank!</span>
+                    </span>
+
+                </div>
+
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="region">Region<span class="text-danger"> *</span></label>
+                        <select ng-model="territoryModel.Region" ng-change="getStates(territoryModel.Region)" class="form-control" style="font-size: 14px" name="region" required>
+                            <option value="">-- Select --</option>
+                            <option ng-repeat="region in regions"> {{ region.name }} </option>
+                        </select>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.region.$dirty && territoryCreateForm.region.$invalid">
+                            <span class="text-danger" ng-show="territoryCreateForm.region.$error.required">Region is required.</span>
+                        </span>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.region.$touched && territoryModel.Region === ''">
+                            <span class="text-danger">Territory Region can not be blank!</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-group">
+                        <label for="state">State<span class="text-danger"> *</span></label>
+                        <select ng-model="territoryModel.State" ng-change="getLocalGovernments(territoryModel.State)" style="font-size: 14px" class="form-control" name="state" required>
+                            <option value="">-- Select --</option>
+                            <option ng-repeat="info in states" value="{{ info.stateCode }}"> {{ info.state }} </option>
+                        </select>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.state.$dirty && territoryCreateForm.state.$invalid">
+                            <span class="text-danger" ng-show="territoryCreateForm.state.$error.required">State is required.</span>
+                        </span>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.state.$touched && territoryModel.State === ''">
+                            <span class="text-danger">State can not be blank!</span>
+                        </span>
+                    </div>
+                </div>
+
+  
+                @*<div class="form-group">
+                    <div class="form-group" ng-hide="result === true">
+                        <label for="lga">Local Government<span class="text-danger"> *</span></label>
+                        <select ng-blur="populateSelectedLgasArray()" class="form-control" id="lga" name="localgovernment" ng-model="territoryModel.LocalGovernment" style="font-size: 14px">
+                            <option value="">-- Select --</option>
+                            <option ng-repeat="localGovernment in localGovernments"> {{ localGovernment.lgaName }} </option>
+                        </select>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.localgovernment.$touched && territoryModel.LocalGovernment === ''">
+                            <span class="text-danger">Please select a LGA!</span>
+                        </span>
+                    </div>
+                </div>*@
+
+                <div class="form-group">
+                    <div class="form-group" ng-hide="result === true">
+                        <label for="lga">Local Government<span class="text-danger"> *</span></label>
+                        <select class="form-control" id="localgovernments"  ng-model="territoryModel.LocalGovernment" name="localgovernment" multiple>
+                            <option class="form-control" ng-repeat="localGovernment in localGovernments" value="{{ localGovernment.lgaName }}"> {{ localGovernment.lgaName }} </option>
+                        </select>
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.localgovernment.$touched && territoryModel.LocalGovernment === ''">
+                            <span class="text-danger">Please select a LGA!</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="form-group" ng-show="result">
+                    <div class="form-group">
+                        <label for="lga">Local Government(s)<span class="text-danger"> *</span></label>
+                        <input ng-model="territoryModel.LocalGovernment" name="lgaInfo" type="text" class="form-control" style="font-size: 14px" placeholder="Enter LGA(s) Information" maxlength="50" />
+                        <span style="font-size: 12px" ng-show="territoryCreateForm.lgaInfo.$touched && territoryModel.LocalGovernment === ''">
+                            <span class="text-danger">Enter LGA info!</span>
+                        </span>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label class="control-label">Population</label>
+                    <input id="population" class="form-control" type="text" maxlength="9" style="font-size: 14px" ng-model="territoryModel.Population">
+                </div>
+
+                <div class="form-group">
+                    <button ng-click="saveTerritory()"
+                            class="btn btn-success btn-block"
+                            ng-disabled="territoryModel.Name === '' || territoryModel.Name === undefined ||
+                            territoryModel.Region === '' || territoryModel.State === '' || territoryModel.State === undefined"
+                             id="createTerritoryButton">
+                        <i class="icon fa fa-plus-circle"></i>Create Territory
+                    </button>
+                    <button class="btn btn-success btn-block" id="processingButton" disabled>
+                        <span class="spinner-grow spinner-grow-sm"></span>
+                        Creating Territory...
+                    </button>
+                    
+                </div>
+            </form>
+
+
+        </div>
+    </div>
+</main>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.29.2/sweetalert2.all.js"></script>
+<script type="text/javascript" src="https://www.cssscript.com/demo/beautiful-growl-notification/growl-notification.min.js"></script>
+
+@*<script type="text/javascript" src="~/js/controllers/territories/create.js"></script>*@
+<script type="text/javascript" src="https://maps.google.com/maps/api/js?key=AIzaSyA1upQLBCBY3O0vVCwsKDtHiYHrixxaJRw&sensor=false&v=3.21.5a&libraries=drawing&signed_in=true&libraries=places,drawing"></script>
+
+@section footerJS{
+    <script>
+        $('#li_territorymanagement').addClass('is-expanded');
+        $('#newterritory').addClass('active');
+    </script>
+    <script src="~/js/plugins/multiselect/js/multiselect.js"></script>
+
+    
+    <script type="text/javascript">
+        var drawingManager;
+        // var coordinatesArray = [];
+        // var currentLocationCoords = { lat: '', lng: '' };
+        var currentLocationLatitude = '';
+        var currentLocationLongitude = '';
+        var selectedShape;
+        var colors = ['#1E90FF', '#FF1493', '#32CD32', '#FF8C00', '#4B0082'];
+        var selectedColor;
+        var colorButtons = {};
+        function clearSelection() {
+            if (selectedShape) {
+                if (typeof selectedShape.setEditable == 'function') {
+                    selectedShape.setEditable(false);
+                }
+                selectedShape = null;
+            }
+            // curseldiv.innerHTML = "<b>cursel</b>:";
+        }
+
+        function updateCurSelText(shape) {
+            posstr = "" + selectedShape.position;
+            if (typeof selectedShape.position == 'object') {
+                posstr = selectedShape.position.toUrlValue();
+            }
+            pathstr = "" + selectedShape.getPath;
+            if (typeof selectedShape.getPath == 'function') {
+                pathstr = "[";
+
+                coordinatesArray = [];  // resides in app.js
+                for (var i = 0; i < selectedShape.getPath().getLength(); i++) {
+                    // .toUrlValue(5) limits number of decimals, default is 6 but can do more
+
+                    if (i === 0) {
+                        pathstr += selectedShape.getPath().getAt(i).toUrlValue();
+                        //console.log(selectedShape.getPath().getAt(i).toUrlValue());
+                    } else {
+                        pathstr += ", " + selectedShape.getPath().getAt(i).toUrlValue();
+                    }
+                    var polygonPath = selectedShape.getPath();
+                    coordinatesArray.push({ lat: polygonPath.getAt(i).lat(), lng: polygonPath.getAt(i).lng() })
+                    // pathstr += ", " + selectedShape.getPath().getAt(i).toUrlValue();
+                }
+                pathstr += "]";
+
+                console.log(coordinatesArray);
+            }
+            bndstr = "" + selectedShape.getBounds;
+            cntstr = "" + selectedShape.getBounds;
+            if (typeof selectedShape.getBounds == 'function') {
+                var tmpbounds = selectedShape.getBounds();
+                cntstr = "" + tmpbounds.getCenter().toUrlValue();
+                bndstr = "[NE: " + tmpbounds.getNorthEast().toUrlValue() + " SW: " + tmpbounds.getSouthWest().toUrlValue() + "]";
+            }
+            cntrstr = "" + selectedShape.getCenter;
+            if (typeof selectedShape.getCenter == 'function') {
+                cntrstr = "" + selectedShape.getCenter().toUrlValue();
+            }
+            radstr = "" + selectedShape.getRadius;
+            if (typeof selectedShape.getRadius == 'function') {
+                radstr = "" + selectedShape.getRadius();
+            }
+            //curseldiv.innerHTML = "<b>cursel</b>: " + selectedShape.type + " " + selectedShape + "; <i>pos</i>: " + posstr + " ; <i>path</i>: " + pathstr + " ; <i>bounds</i>: " + bndstr + " ; <i>Cb</i>: " + cntstr + " ; <i>radius</i>: " + radstr + " ; <i>Cr</i>: " + cntrstr ;
+            curseldiv.innerHTML = "<br /><b>Coordinates</b>: <br />" + pathstr;
+        }
+
+        function setSelection(shape, isNotMarker) {
+            clearSelection();
+            selectedShape = shape;
+            if (isNotMarker)
+                shape.setEditable(true);
+            selectColor(shape.get('fillColor') || shape.get('strokeColor'));
+            updateCurSelText(shape);
+        }
+
+        function deleteSelectedShape() {
+            if (selectedShape) {
+                selectedShape.setMap(null);
+                pathstr = "";
+
+                // show drawing control:
+                drawingManager.setOptions({
+                    drawingControl: true
+                });
+
+                // disable delete shape button
+                document.getElementById("delete-button").disabled = true;
+                document.getElementById("color-palette").disabled = true;
+
+                // clears the coordinates array
+                coordinatesArray = [];
+                // clears the coordinates string text
+                pathstr = "";
+                curseldiv.innerHTML = pathstr;
+            }
+        }
+
+        function selectColor(color) {
+            selectedColor = color;
+            for (var i = 0; i < colors.length; ++i) {
+                var currColor = colors[i];
+                colorButtons[currColor].style.border = currColor == color ? '2px solid #789' : '2px solid #fff';
+            }
+            // Retrieves the current options from the drawing manager and replaces the
+            // stroke or fill color as appropriate.
+            var polylineOptions = drawingManager.get('polylineOptions');
+            polylineOptions.strokeColor = color;
+            drawingManager.set('polylineOptions', polylineOptions);
+            var rectangleOptions = drawingManager.get('rectangleOptions');
+            rectangleOptions.fillColor = color;
+            drawingManager.set('rectangleOptions', rectangleOptions);
+            var circleOptions = drawingManager.get('circleOptions');
+            circleOptions.fillColor = color;
+            drawingManager.set('circleOptions', circleOptions);
+            var polygonOptions = drawingManager.get('polygonOptions');
+            polygonOptions.fillColor = color;
+            drawingManager.set('polygonOptions', polygonOptions);
+        }
+
+        function setSelectedShapeColor(color) {
+            if (selectedShape) {
+                if (selectedShape.type == google.maps.drawing.OverlayType.POLYLINE) {
+                    selectedShape.set('strokeColor', color);
+                } else {
+                    selectedShape.set('fillColor', color);
+                }
+            }
+        }
+
+        function makeColorButton(color) {
+            var button = document.createElement('span');
+            button.className = 'color-button';
+            button.style.backgroundColor = color;
+            google.maps.event.addDomListener(button, 'click', function () {
+                selectColor(color);
+                setSelectedShapeColor(color);
+            });
+            return button;
+        }
+
+        function buildColorPalette() {
+            var colorPalette = document.getElementById('color-palette');
+            for (var i = 0; i < colors.length; ++i) {
+                var currColor = colors[i];
+                var colorButton = makeColorButton(currColor);
+                colorPalette.appendChild(colorButton);
+                colorButtons[currColor] = colorButton;
+            }
+            selectColor(colors[0]);
+        }
+        /////////////////////////////////////
+        var map; //= new google.maps.Map(document.getElementById('map'), {
+        // these must have global refs too!:
+        var placeMarkers = [];
+        var input;
+        var searchBox;
+        var curposdiv;
+        var curseldiv;
+
+        function deletePlacesSearchResults() {
+            for (var i = 0, marker; marker = placeMarkers[i]; i++) {
+                marker.setMap(null);
+            }
+            placeMarkers = [];
+            input.value = ''; // clear the box too
+        }
+        /////////////////////////////////////
+        function initialize() {
+            map = new google.maps.Map(document.getElementById('map'), { //var
+                zoom: 18,//10,
+                center: new google.maps.LatLng(6.547074, 3.358223),//(22.344, 114.048),
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                disableDefaultUI: false,
+                zoomControl: true
+            });
+            curposdiv = document.getElementById('curpos');
+            curseldiv = document.getElementById('cursel');
+            var polyOptions = {
+                strokeWeight: 0,
+                fillOpacity: 0.45,
+                draggable: true,
+                editable: true
+            };
+            // Creates a drawing manager attached to the map that allows the user to draw
+            // markers, lines, and shapes.
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [
+                        /*google.maps.drawing.OverlayType.MARKER,
+                        google.maps.drawing.OverlayType.CIRCLE,
+
+                        */
+                        google.maps.drawing.OverlayType.POLYGON,
+                        //google.maps.drawing.OverlayType.POLYLINE,
+                        //google.maps.drawing.OverlayType.RECTANGLE
+                    ]
+                },
+                markerOptions: {
+                    draggable: true,
+                    editable: true,
+                },
+                polylineOptions: {
+                    editable: true
+                },
+                rectangleOptions: polyOptions,
+                circleOptions: polyOptions,
+                polygonOptions: polyOptions,
+                map: map
+            });
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', function (e) {
+                //~ if (e.type != google.maps.drawing.OverlayType.MARKER) {
+                var isNotMarker = (e.type != google.maps.drawing.OverlayType.MARKER);
+                // Switch back to non-drawing mode after drawing a shape.
+                drawingManager.setDrawingMode(null);
+
+                // hides drawing manager
+                drawingManager.setOptions({
+                    drawingControl: false
+                });
+
+                // enables delete shape button
+                document.getElementById("delete-button").disabled = false;
+                document.getElementById("color-palette").disabled = false;
+
+
+                // Add an event listener that selects the newly-drawn shape when the user
+                // mouses down on it.
+                var newShape = e.overlay;
+                newShape.type = e.type;
+                google.maps.event.addListener(newShape, 'click', function () {
+                    setSelection(newShape, isNotMarker);
+                });
+                google.maps.event.addListener(newShape, 'drag', function () {
+                    updateCurSelText(newShape);
+                });
+                google.maps.event.addListener(newShape, 'dragend', function () {
+                    updateCurSelText(newShape);
+                });
+                setSelection(newShape, isNotMarker);
+                //~ }// end if
+            });
+            // Clear the current selection when the drawing mode is changed, or when the
+            // map is clicked.
+            google.maps.event.addListener(drawingManager, 'drawingmode_changed', clearSelection);
+            google.maps.event.addListener(map, 'click', clearSelection);
+            google.maps.event.addDomListener(document.getElementById('delete-button'), 'click', deleteSelectedShape);
+            buildColorPalette();
+            //~ initSearch();
+            // Create the search box and link it to the UI element.
+            input = ( //var
+                document.getElementById('pac-input'));
+            // map.controls[google.maps.ControlPosition.TOP_RIGHT].push(input);
+            //
+            var DelPlcButDiv = document.createElement('div');
+            //~ DelPlcButDiv.style.color = 'rgb(25,25,25)'; // no effect?
+            DelPlcButDiv.style.backgroundColor = '#fff';
+            DelPlcButDiv.style.cursor = 'pointer';
+            DelPlcButDiv.innerHTML = 'DEL';
+            map.controls[google.maps.ControlPosition.TOP_RIGHT].push(DelPlcButDiv);
+            google.maps.event.addDomListener(DelPlcButDiv, 'click', deletePlacesSearchResults);
+            searchBox = new google.maps.places.SearchBox( //var
+                (input));
+            // Listen for the event fired when the user selects an item from the
+            // pick list. Retrieve the matching places for that item.
+            google.maps.event.addListener(searchBox, 'places_changed', function () {
+                var places = searchBox.getPlaces();
+                if (places.length == 0) {
+                    return;
+                }
+                for (var i = 0, marker; marker = placeMarkers[i]; i++) {
+                    marker.setMap(null);
+                }
+                // For each place, get the icon, place name, and location.
+                placeMarkers = [];
+                var bounds = new google.maps.LatLngBounds();
+                for (var i = 0, place; place = places[i]; i++) {
+                    var image = {
+                        url: place.icon,
+                        size: new google.maps.Size(71, 71),
+                        origin: new google.maps.Point(0, 0),
+                        anchor: new google.maps.Point(17, 34),
+                        scaledSize: new google.maps.Size(25, 25)
+                    };
+                    // Create a marker for each place.
+                    var marker = new google.maps.Marker({
+                        map: map,
+                        icon: image,
+                        title: place.name,
+                        position: place.geometry.location
+                    });
+                    placeMarkers.push(marker);
+                    bounds.extend(place.geometry.location);
+                }
+                map.fitBounds(bounds);
+            });
+            // Bias the SearchBox results towards places that are within the bounds of the
+            // current map's viewport.
+            google.maps.event.addListener(map, 'bounds_changed', function () {
+                var bounds = map.getBounds();
+                searchBox.setBounds(bounds);
+                // currentLocationCoords = { lat: map.getCenter().lat(), lng: map.getCenter().lng() };
+                currentLocationLatitude = map.getCenter().lat();
+                currentLocationLongitude = map.getCenter().lng();
+
+                console.log(map.getCenter().lat());
+                curposdiv.innerHTML = "<b>Current Position: </b><br>" + map.getCenter().toUrlValue();
+            }); //////////////////////
+        }
+
+        google.maps.event.addDomListener(window, 'load', initialize);
+
+        document.getElementById("delete-button").disabled = true;
+        document.getElementById("color-palette").disabled = true;
+                        // color-palette
+    </script>
+
+    <script type="text/javascript" src="~/js/controllers/territories/create.js"></script>
+}

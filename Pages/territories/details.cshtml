@@ -1,0 +1,170 @@
+﻿@page
+@model ValiAdminCore.Pages.blankpageModel
+@{
+    ViewData["Title"] = "blankpage";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<main class="app-content" ng-controller="territoryDetailsCtrl">
+    <div class="app-title">
+        <div>
+            <strong ng-show="territorydataloaded"><i class="fa fa-globe"></i> <span id="territoryName">{{ territoryName }}</span></strong><br />
+            <div ng-show="territorydataloaded">(Covering {{ territoryLga }}, {{ territoryState }} State)</div>
+        </div>
+        <ul class="app-breadcrumb breadcrumb">
+            <li class="breadcrumb-item"><i class="fa fa-home fa-lg"></i></li>
+            <li class="breadcrumb-item">Territory Management</li>
+            <li class="breadcrumb-item active"><a href="/territories">Territories List</a></li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div id="accordion">
+
+                <div class="card">
+                    <div class="card-header">
+                        <a class="card-link" data-toggle="collapse" href="#territorycoveragepane">
+                            Territory Coverage
+                        </a>
+                    </div>
+                    <div id="territorycoveragepane" class="collapse show" data-parent="#accordion">
+                        <div class="card-body">
+                            <div id="map" style="height: 600px"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <a class="collapsed card-link" data-toggle="collapse" href="#collapseTwo">
+                            Sales Reps
+                        </a>
+                    </div>
+                    <div id="collapseTwo" class="collapse" data-parent="#accordion">
+                        <div class="card-body">
+                            <div class="tile-body">
+                                @*<div ng-show="fetchingmappedterritories">
+                                        <div class="spinner-border spinner-border-sm text-success">
+                                        </div>
+                                        Getting Territories...
+                                    </div>*@
+                                <div ng-show="employees.length === 0" class="text-center">
+                                    <i class="fa fa-info-circle"></i> No Sales Rep has been assigned to this territory yet...
+                                </div>
+                                <ul class="list-group" id="employeesPane" ng-show="fetchingmappedterritories !== true">
+                                    <li ng-repeat="employee in employees" class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ employee.name }} ({{employee.personnelNumber}})
+                                        <button class="btn btn-danger btn-md" id="{{ employee.personnelNumber }}" ng-click="unMapRepFromTerritory(employee.personnelNumber, employee.name)"><i class="fa fa-trash"></i> Remove</button>
+
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @*<div class="card">
+                        <div class="card-header">
+                            <a class="collapsed card-link" data-toggle="collapse" href="#collapseThree">
+                                Collapsible Group Item #3
+                            </a>
+                        </div>
+                        <div id="collapseThree" class="collapse" data-parent="#accordion">
+                            <div class="card-body">
+                                Lorem ipsum..
+                            </div>
+                        </div>
+                    </div>*@
+
+            </div>
+        </div>
+    </div>
+    
+</main>
+
+
+@section footerJS{
+
+
+    <script>
+        $('#li_pages').addClass('is-expanded');
+        $('#submenu_blankpage').addClass('active');
+    </script>
+    <script src="~/js/controllers/territories/details.js"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1upQLBCBY3O0vVCwsKDtHiYHrixxaJRw"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.29.2/sweetalert2.all.js"></script>
+    <script type="text/javascript" src="https://www.cssscript.com/demo/beautiful-growl-notification/growl-notification.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.6/dist/loadingoverlay.min.js"></script>
+    
+
+    <script>
+        var map;
+        var infoWindow;
+
+        function d() {
+            alert('ff')
+        }
+
+        function initMap() {
+            // alert(territoryLatitude);
+            map = new google.maps.Map(document.getElementById('map'), {
+              zoom: 16,
+                center: { lat: territoryLatitude, lng: territoryLongitude },
+                mapTypeId: google.maps.MapTypeId.ROADMAP,
+                zoomControl: true
+                //mapTypeId: 'terrain'
+            });
+
+            // Define the LatLng coordinates for the polygon.
+            var triangleCoords = [
+                { lat: 6.547015, lng: 3.357632 },
+                { lat: 6.547804, lng: 3.357713 },
+                { lat: 6.547852, lng: 3.358582 },
+                { lat: 6.547346, lng: 3.359209 },
+                { lat: 6.546749, lng: 3.359177 },
+                { lat: 6.546552, lng: 3.358405 }
+            ];
+
+            // Construct the polygon.
+            var bermudaTriangle = new google.maps.Polygon({
+                //paths: triangleCoords,
+                paths: coordinatesArray,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 3,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35
+            });
+            bermudaTriangle.setMap(map);
+
+            // Add a listener for the click event.
+            bermudaTriangle.addListener('click', showArrays);
+
+            infoWindow = new google.maps.InfoWindow;
+        }
+
+      /** @this {google.maps.Polygon} */
+      function showArrays(event) {
+        // Since this polygon has only one path, we can call getPath() to return the
+        // MVCArray of LatLngs.
+        var vertices = this.getPath();
+
+        var contentString = '<b>' + territoryName + '</b><br>' +
+            'Clicked location: <br>' + event.latLng.lat() + ',' + event.latLng.lng() +
+            '<br>';
+
+        // Iterate over the vertices.
+        for (var i =0; i < vertices.getLength(); i++) {
+          var xy = vertices.getAt(i);
+          contentString += '<br>' + 'Coordinate ' + i + ':<br>' + xy.lat() + ',' +
+              xy.lng();
+        }
+
+        // Replace the info window's content and position.
+        infoWindow.setContent(contentString);
+        infoWindow.setPosition(event.latLng);
+
+        infoWindow.open(map);
+      }
+    </script>
+}

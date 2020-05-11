@@ -1,0 +1,66 @@
+﻿@page
+@model XIDOC.Pages.territoriesListModel
+@{
+    ViewData["Title"] = "Territories List";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+
+<main class="app-content" ng-controller="territoriesListCtrl">
+    <div class="app-title">
+        <div>
+            <h1><i class="fa fa-list"></i> Territories</h1>
+            @*<button class="btn btn-primary btn-block" type="submit" id="drawCircleButton" ng-click="showOverlay()"><i class="fa fa-pencil"></i>Draw Coverage Circle</button>*@
+            @*<p>Table to display analytical data effectively</p>*@
+        </div>
+        <ul class="app-breadcrumb breadcrumb side">
+            <li class="breadcrumb-item"><i class="fa fa-home fa-lg"></i></li>
+            <li class="breadcrumb-item">Territory Management</li>
+            <li class="breadcrumb-item active"><a href="/territories/">Territories List</a></li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="tile">
+                <div class="tile-body">
+                    <table class="table table-hover table-bordered" id="territoriesTable">
+                        <thead>
+                            <tr>
+                                <th width="300px">Name</th>
+                                <th>Local Government(s)</th>
+                                <th>State</th>
+                                <th>Region</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="territory in territories">
+                                <td><a href="/territories/details/{{territory.territoryInfoRecId}}" target="_blank" style="text-decoration: none"> {{territory.name}}</a></td>
+                                <td>{{territory.localGovernment}}</td>
+                                <td>{{territory.state}}</td>
+                                <td>{{territory.region}}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+@section footerJS{
+    <script src="https://pratikborsadiya.in/vali-admin/js/plugins/jquery.dataTables.min.js"></script>
+    <script src="https://pratikborsadiya.in/vali-admin/js/plugins/dataTables.bootstrap.min.js"></script>
+    @*<script type="text/javascript">$('#sampleTable').DataTable();</script>*@
+
+    <script src="~/js/controllers/territories/list.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.29.2/sweetalert2.all.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.6/dist/loadingoverlay.min.js"></script>
+
+    <script>
+        $('#li_territorieslist').addClass('is-expanded');
+        $('#allterritories').addClass('active');
+    </script>
+
+
+}

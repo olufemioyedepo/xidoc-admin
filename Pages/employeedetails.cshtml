@@ -1,0 +1,515 @@
+﻿@page
+@model ValiAdminCore.Pages.blankpageModel
+@{
+    //ViewData["Title"] = "blankpage";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+<main class="app-content" ng-controller="employeesDetailsCtrl">
+    <div class="app-title">
+        <div>
+            <b ng-show="employeedataloaded"><i class="fa fa-map-marker"></i> Set <span id="employeeName">{{ employeename }}</span> (<span id="personnelNumber">{{ personnelnumber }}</span>) as Sales Rep</b>
+        </div>
+        @*<ul class="app-breadcrumb breadcrumb">
+            <li class="breadcrumb-item"><i class="fa fa-home fa-lg"></i></li>
+            <li class="breadcrumb-item"><a href="#">Blank Page</a></li>
+        </ul>*@
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="tile">
+                <div class="row">
+                    <div class="col-md-12">
+                        <form>
+                            <div class="form-group">
+                                <label for="location">Location</label>
+                                <input ng-model="locationAddress" class="form-control" id="locationInput" type="text" placeholder="Input Location">
+                                <small class="form-text text-muted" id="emailHelp">Sales Rep's Point of Reference</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="formattedaddress">Full Address</label>
+                                <input  class="form-control" id="formattedaddress" type="text"  />
+                            </div>
+                            <div class="form-group">
+                                <label for="latitude">Latitude</label>
+                                <input ng-model="locationLatitude" class="form-control" id="latitude" type="text"  />
+                            </div>
+                            <div class="form-group">
+                                <label for="longitude">Longitude</label>
+                                <input ng-model="locationLongitude" class="form-control" id="longitude" type="text"  />
+                            </div>
+                            <div class="form-group">
+                                <label for="coverageradius">Coverage Radius (meters)</label>
+                                <input class="form-control" id="coverageradius" type="text" placeholder="Input Coverage" maxlength="7" />
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <div class="tile-footer">
+                    <p class="bs-component">
+                        @*<button class="btn btn-primary btn-block" type="submit" id="drawCircleButton" onclick="drawCircle()"><i class="fa fa-pencil"></i>Draw Coverage Circle</button>*@
+                        <button class="btn btn-primary btn-block" type="submit" ng-click="addToLocationList()"><i class="fa fa-add"></i>Add Location</button>
+                    </p>
+                    @*<p class="bs-component">
+                        <button class="btn btn-success btn-block" id="mapSalesRep" type="submit" onclick="mapSalesRep()"><i class="fa fa-thumb-tack"></i>Map Sales Rep</button>
+                        <button class="btn btn-success btn-block" disabled id="processingSpinner">
+                            <span class="spinner-border spinner-border-sm"></span>
+                            Processing...
+                        </button>
+                    </p>*@
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="tile">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="tile-body">
+                            <div ng-show="locationsReversed.length == 0" class="text-center">
+                                You're yet to add any location!
+                            </div>
+                            <div ng-show="locationsReversed.length > 0">
+                                <table class="table table-hover table-bordered" id="sampleTable" style="font-size: 14px">
+                                    <thead>
+                                        <tr>
+                                            <th>Address</th>
+                                            <th>Latitude</th>
+                                            <th>Longitude</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tr ng-repeat="location in locationsReversed">
+                                        <td>
+                                            {{ location.Address }}
+                                        </td>
+                                        <td>
+                                            {{ location.LocationLatitide }}
+                                        </td>
+                                        <td>
+                                            {{ location.LocationLongitude }}
+                                        </td>
+                                        <td>
+                                            <button class="btn btn-danger btn-block" type="submit" ng-click="removeLocation(location)"><i class="fa fa-trash"></i>Remove</button>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <div class="row">
+                                    <div class="col-4 mx-auto text-center">
+                                        <button class="btn btn-success btn-block" type="submit" id="drawCoveragePolygon" ng-click="drawCoveragePolygon(locationsReversed)"><i class="fa fa-pencil"></i><b>Draw Territory Coverage</b></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tile">
+                <div class="row">
+                    <div class="col-md-12" id="map" style="height: 500px">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.29.2/sweetalert2.all.js"></script>
+
+
+@section footerJS{
+    <script>
+        $('#li_pages').addClass('is-expanded');
+        $('#submenu_blankpage').addClass('active');
+    </script>
+    <script>
+        var latitude, longitude, personnelNumber, employeeName, coverageRadius, outOfCoverageLimit, commissionPercentageRate;
+        var map, agentLocation, radius;
+        var cityCircle;
+        var polygonCoordinates = [];
+        var showOverlay = false;
+        var mapLoaded = false;
+        var bermudaTriangle;
+
+        $("#processingSpinner").hide();
+
+        var salesAgentPayload = {
+            personnelNumber: '',
+            salesAgentLongitude: '',
+            salesAgentLatitude: '',
+            coverageRadius: 0,
+            outOfCoverageLimit: 0,
+            commissionPercentageRate: 0,
+            agentLocation: ''
+        };
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 6.547074, lng: 3.358222899999987 },
+                zoom: 15,
+            });
+            var input = document.getElementById('locationInput');
+            //map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            var autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo('bounds', map);
+
+            var infowindow = new google.maps.InfoWindow();
+            var marker = new google.maps.Marker({
+                map: map,
+                anchorPoint: new google.maps.Point(0, -29)
+            });
+
+            autocomplete.addListener('place_changed', function () {
+                infowindow.close();
+                marker.setVisible(false);
+                var place = autocomplete.getPlace();
+                // console.log(place);
+
+                if (!place.geometry) {
+                    window.alert("Autocomplete's returned place contains no geometry");
+                    return;
+                }
+
+                // If the place has a geometry, then present it on a map.
+                if (place.geometry.viewport) {
+                    map.fitBounds(place.geometry.viewport);
+                } else {
+                    map.setCenter(place.geometry.location);
+                    map.setZoom(17);
+                }
+                marker.setIcon(({
+                    url: place.icon,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(35, 35)
+                }));
+                marker.setPosition(place.geometry.location);
+                marker.setVisible(true);
+
+                var address = '';
+                if (place.address_components) {
+                    address = [
+                        (place.address_components[0] && place.address_components[0].short_name || ''),
+                        (place.address_components[1] && place.address_components[1].short_name || ''),
+                        (place.address_components[2] && place.address_components[2].short_name || '')
+                    ].join(' ');
+                }
+
+                infowindow.setContent('<div><strong>' + place.name + '</strong><br>' + address);
+                infowindow.open(map, marker);
+
+                latitude = place.geometry.location.lat();
+                longitude = place.geometry.location.lng();
+                agentLocation = place.formatted_address;
+
+                document.getElementById('formattedaddress').value = place.formatted_address;
+                document.getElementById('latitude').value = place.geometry.location.lat();
+                document.getElementById('longitude').value = place.geometry.location.lng();
+
+
+            });
+
+            setAgentPayloadParameters();
+        };
+
+        function initPolygonMap() {
+            var mapCenter;
+           
+
+          map = new google.maps.Map(document.getElementById('map'), {
+            zoom:  15,
+            center: {lat: 6.4389884, lng: 3.4678460000000086},
+            mapTypeId: 'terrain'
+          });
+
+            var input = document.getElementById('locationInput');
+            //map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+            var autocomplete = new google.maps.places.Autocomplete(input);
+            autocomplete.bindTo('bounds', map);
+
+            var infowindow = new google.maps.InfoWindow();
+            var marker = new google.maps.Marker({
+                map: map,
+                anchorPoint: new google.maps.Point(0, -29)
+            });
+
+            autocomplete.addListener('place_changed', function () {
+                infowindow.close();
+                marker.setVisible(false);
+                var place = autocomplete.getPlace();
+                console.log(place.geometry);
+
+                if (!place.geometry) {
+                    window.alert("Autocomplete's returned place contains no geometry");
+                    return;
+                }
+
+                // If the place has a geometry, then present it on a map.
+                if (place.geometry.viewport) {
+                    map.fitBounds(place.geometry.viewport);
+                } else {
+                    map.setCenter(place.geometry.location);
+                    map.setZoom(17);
+                }
+                marker.setIcon(({
+                    url: place.icon,
+                    size: new google.maps.Size(71, 71),
+                    origin: new google.maps.Point(0, 0),
+                    anchor: new google.maps.Point(17, 34),
+                    scaledSize: new google.maps.Size(35, 35)
+                }));
+                marker.setPosition(place.geometry.location);
+                marker.setVisible(true);
+
+                var address = '';
+                if (place.address_components) {
+                    address = [
+                        (place.address_components[0] && place.address_components[0].short_name || ''),
+                        (place.address_components[1] && place.address_components[1].short_name || ''),
+                        (place.address_components[2] && place.address_components[2].short_name || '')
+                    ].join(' ');
+                }
+
+                infowindow.setContent('<div><strong>' + place.name + '</strong><br>' + address);
+                infowindow.open(map, marker);
+
+                latitude = place.geometry.location.lat();
+                longitude = place.geometry.location.lng();
+                agentLocation = place.formatted_address;
+
+                document.getElementById('formattedaddress').value = place.formatted_address;
+                document.getElementById('latitude').value = place.geometry.location.lat();
+                document.getElementById('longitude').value = place.geometry.location.lng();
+
+            });
+
+          var bounds = new google.maps.LatLngBounds();
+
+          // Define the LatLng coordinates for the polygon's path.
+            /* 
+          var triangleCoords = [
+            {lat: 6.4389884, lng: 3.4678460000000086},
+            {lat: 6.4317653, lng: 3.4749733999999535},
+            {lat: 6.4311757, lng: 3.4709728999999925},
+            {lat: 6.435805, lng: 3.4555139999999938},
+            {lat: 6.434813800000001, lng: 3.462771400000065 },
+          ];
+
+          // Construct the polygon.
+          var bermudaTriangle = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35
+          });
+          bermudaTriangle.setMap(map);
+            */
+          /*
+          for (i = 0; i < triangleCoords.length; i++) {
+  	        bounds.extend(triangleCoords[i]);
+	      }*/
+          //alert(bounds.getCenter());
+        }
+
+        function updatePolygonPoints() {
+
+          // Define the LatLng coordinates for the polygon's path.
+          var triangleCoords = [
+            {lat: 6.4389884, lng: 3.4678460000000086},
+            {lat: 6.4317653, lng: 3.4749733999999535},
+            {lat: 6.4311757, lng: 3.4709728999999925},
+            {lat: 6.435805, lng: 3.4555139999999938},
+            {lat: 6.434813800000001, lng: 3.462771400000065 },
+          ];
+
+
+          // Construct the polygon.
+          var bermudaTriangle = new google.maps.Polygon({
+            paths: triangleCoords,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35
+          });
+          bermudaTriangle.setMap(map);
+        };
+
+        function drawPolygon(polygonCoordinates) {
+            var polygonPoints = [];
+            polygonPoints = polygonCoordinates;
+
+            bermudaTriangle = new google.maps.Polygon({
+                paths: polygonPoints,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: '#FF0000',
+                fillOpacity: 0.35
+            });
+
+            if (mapLoaded == true) {
+                bermudaTriangle.setMap(null);
+
+                bermudaTriangle.setMap(map);
+            } else {
+                bermudaTriangle.setMap(map);
+            }
+            
+            mapLoaded = true;
+        };
+
+        function setPolygonCoordinates(locationCoordinates) {
+            polygonCoordinates = [];
+
+            for (var i in locationCoordinates) {
+                var obj = locationCoordinates[i];
+                var polygonPoint = { lat: parseFloat(obj.LocationLatitide), lng: parseFloat(obj.LocationLongitude) };
+                polygonCoordinates.push(polygonPoint);
+            }
+            drawPolygon(polygonCoordinates);
+            //console.log(polygonCoordinates)
+        };
+        
+        function drawCircle() {
+            var circleCenter = { lat: latitude, lng: longitude };
+            radius = document.getElementById('coverageradius').value;
+            coverageRadius = radius;
+
+            console.log(radius);
+
+            if (cityCircle) {
+                cityCircle.radius = radius;
+                cityCircle.setCenter(circleCenter);
+
+                cityCircle = new google.maps.Circle({
+                  strokeColor: '#FF0000',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                  fillColor: '#FF0000',
+                  fillOpacity: 0.35,
+                  map: map,
+                  center: circleCenter,
+                  radius: parseFloat(radius)
+                });
+
+            } else {
+              cityCircle = new google.maps.Circle({
+                  strokeColor: '#FF0000',
+                  strokeOpacity: 0.8,
+                  strokeWeight: 2,
+                  fillColor: '#FF0000',
+                  fillOpacity: 0.35,
+                  map: map,
+                  center: circleCenter,
+                  radius: parseFloat(radius)
+              });
+            }
+
+            setAgentPayloadParameters();
+        };
+
+        function setAgentPayloadParameters() {
+            personnelNumber = document.getElementById('personnelNumber').innerHTML
+            employeeName = document.getElementById('employeeName').innerHTML
+
+            salesAgentPayload.agentLocation = agentLocation;
+            salesAgentPayload.coverageRadius = radius;
+            salesAgentPayload.personnelNumber = personnelNumber;
+            salesAgentPayload.salesAgentLatitude = latitude;
+            salesAgentPayload.salesAgentLongitude = longitude;
+
+            console.log(salesAgentPayload);
+        };
+
+        function mapSalesRep() {
+            setAgentPayloadParameters();
+
+            swal({
+                title: "Assign to Territory?",
+                text: "Are you sure you want to assign " + employeeName + " to the marked territory?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, go ahead!",
+                cancelButtonText: "Cancel",
+            }).then((result) => {
+                
+                
+
+                if (result.value) {
+                    $("#processingSpinner").show();
+                    $("#mapSalesRep").hide();
+                    $("#drawCircleButton").attr("disabled", "disabled");
+
+                    setTimeout(
+                        ajaxRequest,
+                        3000);
+                }
+            })
+        };
+
+        function unMapSalesRep(empName, personnelNumber) {
+            swal({
+                title: "Remove?",
+                text: "Are you sure you want to remove " + employeeName + " as a Sales Rep?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Remove",
+                cancelButtonText: "No!",
+            }).then((result) => {
+                if (result.value) {
+                    $("#processingSpinner").show();
+                    $("#mapSalesRep").hide();
+                    $("#drawCircleButton").attr("disabled", "disabled");
+
+                    setTimeout(
+                        ajaxRequest,
+                        4000);
+                }
+            })
+        }
+
+        function ajaxRequest() {
+            jQuery.ajax({
+                url: 'https://geofencingwebapi20191030062137.azurewebsites.net/api/employees/addasagent',
+                type: "POST",
+                data: JSON.stringify(salesAgentPayload),
+                dataType: "json",
+                contentType: "application/json",
+                success: function () {
+
+                    Swal.fire(
+                        'Success',
+                        employeeName + ' has been successfully set as a Sales Rep',
+                        'success'
+                    )
+                    $("#processingSpinner").hide();
+                    $("#mapSalesRep").show();
+                    $("#drawCircleButton").removeAttr("disabled");
+                },
+                error: function () {
+                    $("#processingSpinner").hide();
+                    $("#mapSalesRep").show();
+                    $("#drawCircleButton").removeAttr("disabled");
+
+                    alert('An error occurred!');
+                }
+            });
+        }
+
+
+    </script>
+
+    <script src="~/js/controllers/employees/employeedetails.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1upQLBCBY3O0vVCwsKDtHiYHrixxaJRw&libraries=places&callback=initPolygonMap" async defer></script>
+    @*<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1upQLBCBY3O0vVCwsKDtHiYHrixxaJRw&libraries=places" async defer></script>*@
+
+}

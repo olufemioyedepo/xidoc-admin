@@ -1,0 +1,112 @@
+﻿@page
+@model XIDOC.Views.Employees.IndexModel
+@{
+    ViewData["Title"] = "Employees List";
+    Layout = "~/Pages/Shared/_Layout.cshtml";
+}
+
+
+<main class="app-content" ng-controller="employeesListCtrl">
+    <div class="app-title">
+        <div>
+            <h1><i class="fa fa-users"></i> Employees</h1>
+            @*<button class="btn btn-primary btn-block" type="submit" id="drawCircleButton" ng-click="showOverlay()"><i class="fa fa-pencil"></i>Draw Coverage Circle</button>*@
+            @*<p>Table to display analytical data effectively</p>*@
+        </div>
+        @*<ul class="app-breadcrumb breadcrumb side">
+            <li class="breadcrumb-item"><i class="fa fa-home fa-lg"></i></li>
+            <li class="breadcrumb-item">Tables</li>
+            <li class="breadcrumb-item active"><a href="#">Data Table</a></li>
+        </ul>*@
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="tile">
+                <div class="tile-body">
+                    <table class="table table-hover table-bordered" id="sampleTable">
+                        <thead>
+                            <tr>
+                                <th width="300px">Name</th>
+                                <th>Personnel No.</th>
+                                <th>Email</th>
+                                @*<th>Actions</th>*@
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="employee in employees" id="{{$parent.$id+'-'+$index}}">
+                                <td><a href="territory/mapping/{{employee.hcmWorkerRecId}}" target="_blank" style="text-decoration: none"> {{employee.name}}</a></td>
+                                <td>{{employee.personnelNumber}}</td>
+                                <td>{{employee.primaryContactEmail}}</td>
+                                @*<td>
+                                    <button id="{{ $index }}" ng-show="employee.isSalesAgent == 'true'" ng-click="unMapSalesRep(employee.name, employee.personnelNumber)" class="btn btn-danger btn-rounded"><i class="fa fa-trash"></i> Remove</button>
+                                    <a href="employeedetails/{{ employee.hcmWorkerRecId }}" ng-show="employee.isSalesAgent != 'true'" class="btn btn-success btn-rounded"><i class="fa fa-plus-circle"></i> Set as Sales Rep</a>
+                                </td>*@
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+@section footerJS{
+    <script src="https://pratikborsadiya.in/vali-admin/js/plugins/jquery.dataTables.min.js"></script>
+    <script src="https://pratikborsadiya.in/vali-admin/js/plugins/dataTables.bootstrap.min.js"></script>
+    @*<script type="text/javascript">$('#sampleTable').DataTable();</script>*@
+
+    <script src="~/js/controllers/employees/employees.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/7.29.2/sweetalert2.all.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.6/dist/loadingoverlay.min.js"></script>
+
+    <script>
+        $('#li_employeeslist').addClass('is-expanded');
+        $('#allemployees').addClass('active');
+    </script>
+
+    <script>
+        function doUnmapSalesRep(employeeName, personnelNumber) {
+            swal({
+                title: "Remove?",
+                text: "Are you sure you want to remove " + employeeName + " (" + personnelNumber + ") as Sales Rep?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Remove",
+                cancelButtonText: "Cancel",
+            }).then((result) => {
+                if (result.value) {
+                    removeSalesAgent(personnelNumber, employeeName);
+                }
+            })
+        };
+
+        function removeSalesRep(personnelNumber, employeeName) {
+            var obj = { personnelNumber: personnelNumber };
+
+            jQuery.ajax({
+                url: 'https://geofencingwebapi20191030062137.azurewebsites.net/api/Employees/removeasagent',
+                type: "POST",
+                data: JSON.stringify(obj),
+                dataType: "json",
+                contentType: "application/json",
+                success: function (response) {
+                    console.log(response);
+
+                    Swal.fire(
+                        'Success',
+                        employeeName + ' has been removed as a Sales Rep',
+                        'success'
+                    )
+                },
+                error: function () {
+                    alert('An error occurred!');
+                }
+            });
+        };
+
+        
+    </script>
+
+
+}
